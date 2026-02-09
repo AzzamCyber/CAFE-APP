@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Ganti ke "postgresql" jika deploy ke Vercel (Production)
+  url      = env("DATABASE_URL")
+}
+
+// 1. Konfigurasi Cafe (Dinamis)
+model Setting {
+  id             String   @id @default("config") // ID statis agar cuma ada 1 baris setting
+  cafeName       String   @default("Cafe Senja")
+  description    String?  @default("Nikmati kopi terbaik")
+  logo           String?  // URL Logo (Upload)
+  primaryColor   String   @default("#2563eb") // Warna Utama (Hex)
+  secondaryColor String   @default("#1e293b") // Warna Aksen (Hex)
+  address        String?
+  phone          String?
+  updatedAt      DateTime @updatedAt
+}
+
+// 2. User untuk Login Admin/Kasir
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("ADMIN") // ADMIN, CASHIER, KITCHEN
+  createdAt DateTime @default(now())
+}
+
+// 3. Kategori Menu (Makanan, Minuman, Snack)
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  products  Product[]
+}
+
+// 4. Produk / Menu
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  price       Int
+  image       String?
+  isAvailable Boolean     @default(true)
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[] // Relasi ke history pesanan
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// 5. Pesanan (Header)
+model Order {
+  id        String      @id @default(cuid())
+  customer  String      // Nama Pemesan
+  tableNo   String?     // Nomor Meja (Bisa null jika Takeaway)
+  total     Int         // Total Harga
+  status    String      @default("PENDING") // PENDING, PROCESSING, COMPLETED, CANCELLED
+  type      String      @default("DINE_IN") // DINE_IN, TAKEAWAY
+  payment   String      @default("CASH")    // CASH, QRIS
+  items     OrderItem[] // List Item yang dipesan
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+// 6. Detail Item Pesanan (Penyimpan harga saat transaksi terjadi)
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Int     // Simpan harga saat beli (jaga-jaga harga produk berubah di masa depan)
+  note      String? // Catatan khusus (e.g. "Jangan pedas", "Es dikit")
+}
