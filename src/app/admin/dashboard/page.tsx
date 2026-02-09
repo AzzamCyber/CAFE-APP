@@ -59,8 +59,10 @@ export default function Dashboard() {
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" fontSize={12} />
-                <YAxis fontSize={12} tickFormatter={(val) => `${val/1000}k`} />
-                <Tooltip formatter={(val: number) => formatRupiah(val)} />
+                {/* Fix: Tambahkan tipe 'any' pada tickFormatter */}
+                <YAxis fontSize={12} tickFormatter={(val: any) => `${val/1000}k`} />
+                {/* Fix: Ubah tipe parameter menjadi 'any' agar lolos build */}
+                <Tooltip formatter={(value: any) => formatRupiah(value)} />
                 <Bar dataKey="total" fill="#2563eb" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
